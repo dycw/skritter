@@ -1,0 +1,7 @@
+name: python-project-template
+
+dependencies:
+  - python = 3.9.*
+  - pip
+  - pip:
+      - --requirement=requirements/dev.txt

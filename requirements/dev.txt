@@ -1,0 +1,4 @@
+-r test.txt
+
+bump2version == 1.0.*
+pre-commit == 2.8.*

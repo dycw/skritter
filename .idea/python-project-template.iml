@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="PYTHON_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$">
+      <excludePattern pattern=".coverage" />
+      <excludePattern pattern="*.egg-info" />
+      <excludePattern pattern="*.ipynb" />
+      <excludePattern pattern=".cache" />
+      <excludePattern pattern=".cenv" />
+      <excludePattern pattern=".hypothesis" />
+      <excludePattern pattern=".idea" />
+      <excludePattern pattern="instance" />
+      <excludePattern pattern=".ipynb_checkpoints" />
+      <excludePattern pattern=".mypy_cache" />
+      <excludePattern pattern=".pytest_cache" />
+      <excludePattern pattern="build" />
+      <excludePattern pattern="dist" />
+      <excludePattern pattern="htmlcov" />
+      <excludePattern pattern="logs" />
+    </content>
+    <orderEntry type="jdk" jdkName="Python 3.8 (python-project-template)" jdkType="Python SDK" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>

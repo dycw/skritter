@@ -1,0 +1,6 @@
+-r core.txt
+
+pytest == 6.1.*
+pytest-cov == 2.10.*
+pytest-randomly == 3.5.*
+pytest-xdist == 2.1.*

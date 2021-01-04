@@ -1,0 +1,11 @@
+[tool.black]
+line-length = 80
+target-version = ["py38"]
+
+[tool.nitpick]
+style = "https://raw.githubusercontent.com/dycw/nitpick/master/nitpick-style.toml"
+
+[tool.pytest.ini_options]
+addopts = "-rsxX -v --color=yes --cov-config=setup.cfg --cov-report=html --durations=5"
+minversion = "6.0"
+testpaths = "tests"
