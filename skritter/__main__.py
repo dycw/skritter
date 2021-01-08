@@ -16,7 +16,7 @@ def _make_tqdm(*, total: int, step: float, desc: str) -> tqdm:
 
 
 @command()
-@option("--init", default=10, type=int)
+@option("--init", default=5, type=int)
 @option("--duration", default=60 * 60, type=int)
 @option("--step", default=3.0, type=float)
 def main(
