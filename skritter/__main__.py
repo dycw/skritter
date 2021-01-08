@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from time import sleep
 
 from click import command
