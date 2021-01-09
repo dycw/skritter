@@ -45,7 +45,9 @@ def loop(
             press_and_release(Key.enter)
         elif phase is Phase.review:
             events = collect_mouse_events(review)
-            clicks = sum(isinstance(e, Events.Click) for e in events)
+            clicks = sum(
+                isinstance(e, Events.Click) and e.pressed for e in events
+            )
             if clicks == 0:
                 press_and_release_three()
             elif clicks == 1:
