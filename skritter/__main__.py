@@ -1,47 +1,15 @@
-from __future__ import annotations
-
-from time import sleep
-
 from click import command
 from click import option
-from pynput.keyboard import Controller
-from pynput.keyboard import Key
-from tqdm import tqdm
 
-
-KEYBOARD = Controller()
-INIT_STEP = 0.1
-
-
-def _make_tqdm(*, total: int, step: float, desc: str) -> tqdm:
-    return tqdm(range(int(total / step)), desc=desc)
+from skritter import loop
 
 
 @command()
 @option("--init", default=5, type=int)
-@option("--duration", default=60 * 60, type=int)
-@option("--step", default=1.0, type=float)
-def main(
-    *,
-    init: int,
-    duration: int,
-    step: float,
-) -> None:
-    for _ in _make_tqdm(
-        total=init,
-        step=INIT_STEP,
-        desc="Initializing",
-    ):
-        sleep(INIT_STEP)
-
-    for _ in _make_tqdm(
-        total=duration,
-        step=step,
-        desc="Running",
-    ):
-        KEYBOARD.press(Key.enter)
-        KEYBOARD.release(Key.enter)
-        sleep(step)
+@option("--test", default=3.0, type=float)
+@option("--review", default=3.0, type=float)
+def main(*, init: int, test: float, review: float) -> None:
+    loop(init=init, test=test, review=review)
 
 
 if __name__ == "__main__":
