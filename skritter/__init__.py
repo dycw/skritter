@@ -28,7 +28,7 @@ LOGGER = getLogger(__name__)
 
 def loop(
     *,
-    init: int,
+    init: float,
     test: float,
     review: float,
 ) -> None:
