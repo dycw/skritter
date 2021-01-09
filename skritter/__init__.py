@@ -47,7 +47,7 @@ def loop_until_click(
 
     LOGGER.info("Running...")
     keyboard = Controller()
-    for key, dur in cycle([(Key.enter, test), ("3", review)]):
+    for dur, key in cycle([(test, Key.enter), (review, "3")]):
         events = collect_mouse_events(dur)
         if any(isinstance(event, Events.Click) for event in events):
             LOGGER.info("Mouse clicked; aborting...")

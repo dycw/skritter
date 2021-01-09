@@ -6,14 +6,9 @@ from skritter import loop_until_click
 
 @command()
 @option("--init", default=5, type=int)
-@option("--test", default=4, type=int)
-@option("--review", default=2, type=int)
-def main(
-    *,
-    init: int,
-    test: int,
-    review: int,
-) -> None:
+@option("--test", default=3, type=int)
+@option("--review", default=3, type=int)
+def main(*, init: int, test: int, review: int) -> None:
     loop_until_click(init=init, test=test, review=review)
 
 
