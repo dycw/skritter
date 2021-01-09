@@ -38,21 +38,21 @@ def loop(
         sleep(step)
 
     LOGGER.info("Running...")
-    press_and_release_three()
+    press_3()
     for phase in cycle(Phase):
         if phase is Phase.test:
             sleep(test)
-            press_and_release(Key.enter)
+            press(Key.enter)
         elif phase is Phase.review:
-            events = collect_mouse_events(review)
+            events = collect_events(review)
             clicks = sum(
                 isinstance(e, Events.Click) and e.pressed for e in events
             )
             if clicks == 0:
-                press_and_release_three()
+                press_3()
             elif clicks == 1:
                 LOGGER.info("Marking as forgot...")
-                press_and_release("1")
+                press("1")
             else:
                 LOGGER.info("Ending session...")
                 return
@@ -65,17 +65,17 @@ class Phase(Enum):
     review = auto()
 
 
-def press_and_release(key: Any) -> None:
+def press(key: Any) -> None:
     keyboard = Controller()
     keyboard.press(key)
     keyboard.release(key)
 
 
-def press_and_release_three() -> None:
-    press_and_release("3")
+def press_3() -> None:
+    press("3")
 
 
-def collect_mouse_events(duration: float) -> List[Events]:
+def collect_events(duration: float) -> List[Events]:
     start = default_timer()
     end = start + duration
     events: List[Events] = []
