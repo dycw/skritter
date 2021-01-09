@@ -41,21 +41,18 @@ def loop(
     press_3()
     for phase in cycle(Phase):
         if phase is Phase.test:
-            sleep(test)
-            press(Key.enter)
-        elif phase is Phase.review:
-            events = collect_events(review)
-            clicks = sum(
-                isinstance(e, Events.Click) and e.pressed for e in events
-            )
-            if clicks == 0:
-                press_3()
-            elif clicks == 1:
-                LOGGER.info("Marking as forgot...")
-                press("1")
+            if count_clicks(test):
+                return log_end()
             else:
-                LOGGER.info("Ending session...")
-                return
+                press_enter()
+        elif phase is Phase.review:
+            clicks = count_clicks(review)
+            if clicks == 0:
+                press_enter()
+            elif clicks == 1:
+                press_3()
+            else:
+                return log_end()
         else:
             raise ValueError(f"Invalid phase: {phase}")
 
@@ -71,6 +68,10 @@ def press(key: Any) -> None:
     keyboard.release(key)
 
 
+def press_enter() -> None:
+    press(Key.enter)
+
+
 def press_3() -> None:
     press("3")
 
@@ -84,6 +85,15 @@ def collect_events(duration: float) -> List[Events]:
             if (ev := evs.get(timeout=dur)) is not None:
                 events.append(ev)
     return events
+
+
+def count_clicks(duration: float) -> int:
+    events = collect_events(duration)
+    return sum(isinstance(e, Events.Click) and e.pressed for e in events)
+
+
+def log_end() -> None:
+    LOGGER.info("Ending session...")
 
 
 __version__ = "0.0.4"
