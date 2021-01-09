@@ -44,13 +44,14 @@ def loop(
             if count_clicks(test):
                 return log_end()
             else:
-                press_enter()
+                press(Key.enter)
         elif phase is Phase.review:
             clicks = count_clicks(review)
             if clicks == 0:
-                press_enter()
-            elif clicks == 1:
                 press_3()
+            elif clicks == 1:
+                LOGGER.info("Marking as forgotten...")
+                press("1")
             else:
                 return log_end()
         else:
@@ -66,10 +67,6 @@ def press(key: Any) -> None:
     keyboard = Controller()
     keyboard.press(key)
     keyboard.release(key)
-
-
-def press_enter() -> None:
-    press(Key.enter)
 
 
 def press_3() -> None:
