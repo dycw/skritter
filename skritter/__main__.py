@@ -1,45 +1,49 @@
+from itertools import cycle
+from logging import basicConfig
+from logging import getLogger
+from logging import INFO
+from sys import stdout
 from time import sleep
 
 from click import command
 from click import option
 from pynput.keyboard import Controller
 from pynput.keyboard import Key
-from tqdm import tqdm
+from pynput.mouse import Events
 
 
+basicConfig(
+    datefmt="%Y-%m-%d %H:%M:%S",
+    format="{asctime}: {msg}",
+    level=INFO,
+    stream=stdout,
+    style="{",
+)
+LOGGER = getLogger(__file__)
+LOGGER.setLevel(INFO)
 KEYBOARD = Controller()
-INIT_STEP = 0.1
-
-
-def _make_tqdm(*, total: int, step: float, desc: str) -> tqdm:
-    return tqdm(range(int(total / step)), desc=desc)
 
 
 @command()
 @option("--init", default=5, type=int)
-@option("--duration", default=60 * 60, type=int)
 @option("--step", default=3.0, type=float)
 def main(
     *,
     init: int,
-    duration: int,
     step: float,
 ) -> None:
-    for _ in _make_tqdm(
-        total=init,
-        step=INIT_STEP,
-        desc="Initializing",
-    ):
-        sleep(INIT_STEP)
+    LOGGER.info("Initializing...")
+    sleep(init)
 
-    for _ in _make_tqdm(
-        total=duration,
-        step=step,
-        desc="Running",
-    ):
-        KEYBOARD.press(Key.enter)
-        KEYBOARD.release(Key.enter)
-        sleep(step)
+    LOGGER.info("Running...")
+    for key in cycle([Key.enter, "3"]):
+        LOGGER.info("Waiting for events")
+        with Events() as events:
+            if isinstance(events.get(timeout=step), Events.Click):
+                LOGGER.info("Stopping")
+                return
+        KEYBOARD.press(key)
+        KEYBOARD.release(key)
 
 
 if __name__ == "__main__":
