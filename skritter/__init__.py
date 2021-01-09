@@ -12,6 +12,7 @@ from typing import List
 from pynput.keyboard import Controller
 from pynput.keyboard import Key
 from pynput.mouse import Events
+from tqdm import tqdm
 
 
 basicConfig(
@@ -43,22 +44,20 @@ def loop_until_click(
     review: int,
 ) -> None:
     LOGGER.info("Initializing... (please go to https://skritter.com/study)")
-    sleep(init)
+    step = 0.01
+    for _ in tqdm(range(int(init / step))):
+        sleep(step)
 
     LOGGER.info("Running...")
     keyboard = Controller()
     for key, dur in cycle([(Key.enter, test), ("3", review)]):
-        LOGGER.info("start")
         with collect_mouse_events(dur) as events:
             if any(isinstance(event, Events.Click) for event in events):
-                LOGGER.info("Aborting")
+                LOGGER.info("Mouse clicked; aborting...")
                 return
             else:
-                LOGGER.info(f"Pressing {key}...")
                 keyboard.press(key)
                 keyboard.release(key)
-                LOGGER.info(f"Sleeping {dur}...")
-        LOGGER.info("end")
 
 
 __version__ = "0.0.3"
