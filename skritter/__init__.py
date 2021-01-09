@@ -86,4 +86,4 @@ def collect_events(duration: float) -> List[Events]:
     return events
 
 
-__version__ = "0.0.5"
+__version__ = "0.0.4"
