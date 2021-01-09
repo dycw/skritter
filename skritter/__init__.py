@@ -1,4 +1,3 @@
-from contextlib import contextmanager
 from itertools import cycle
 from logging import basicConfig
 from logging import getLogger
@@ -6,7 +5,6 @@ from logging import INFO
 from sys import stdout
 from time import sleep
 from timeit import default_timer
-from typing import Iterator
 from typing import List
 
 from pynput.keyboard import Controller
@@ -25,8 +23,7 @@ basicConfig(
 LOGGER = getLogger(__name__)
 
 
-@contextmanager
-def collect_mouse_events(duration: float) -> Iterator[List[Events]]:
+def collect_mouse_events(duration: float) -> List[Events]:
     start = default_timer()
     end = start + duration
     events: List[Events] = []
@@ -34,7 +31,7 @@ def collect_mouse_events(duration: float) -> Iterator[List[Events]]:
         with Events() as evs:
             if (ev := evs.get(timeout=dur)) is not None:
                 events.append(ev)
-    yield events
+    return events
 
 
 def loop_until_click(
@@ -51,13 +48,13 @@ def loop_until_click(
     LOGGER.info("Running...")
     keyboard = Controller()
     for key, dur in cycle([(Key.enter, test), ("3", review)]):
-        with collect_mouse_events(dur) as events:
-            if any(isinstance(event, Events.Click) for event in events):
-                LOGGER.info("Mouse clicked; aborting...")
-                return
-            else:
-                keyboard.press(key)
-                keyboard.release(key)
+        events = collect_mouse_events(dur)
+        if any(isinstance(event, Events.Click) for event in events):
+            LOGGER.info("Mouse clicked; aborting...")
+            return
+        else:
+            keyboard.press(key)
+            keyboard.release(key)
 
 
 __version__ = "0.0.4"
