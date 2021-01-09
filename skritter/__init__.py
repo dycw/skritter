@@ -1,3 +1,5 @@
+from enum import auto
+from enum import Enum
 from itertools import cycle
 from logging import basicConfig
 from logging import getLogger
@@ -5,6 +7,7 @@ from logging import INFO
 from sys import stdout
 from time import sleep
 from timeit import default_timer
+from typing import Any
 from typing import List
 
 from pynput.keyboard import Controller
@@ -23,6 +26,48 @@ basicConfig(
 LOGGER = getLogger(__name__)
 
 
+def loop(
+    *,
+    init: int,
+    test: float,
+    review: float,
+) -> None:
+    LOGGER.info("Initializing... (please go to https://skritter.com/study)")
+    step = 0.01
+    for _ in tqdm(range(int(init / step))):
+        sleep(step)
+
+    LOGGER.info("Running...")
+    for phase in cycle(Phase):
+        if phase is Phase.test:
+            sleep(test)
+            press_and_release(Key.enter)
+        elif phase is Phase.review:
+            events = collect_mouse_events(review)
+            clicks = sum(isinstance(e, Events.Click) for e in events)
+            if clicks == 0:
+                press_and_release("3")
+            elif clicks == 1:
+                LOGGER.info("Marking as forgot...")
+                press_and_release("1")
+            else:
+                LOGGER.info("Ending session...")
+                return
+        else:
+            raise ValueError(f"Invalid phase: {phase}")
+
+
+class Phase(Enum):
+    test = auto()
+    review = auto()
+
+
+def press_and_release(key: Any) -> None:
+    keyboard = Controller()
+    keyboard.press(key)
+    keyboard.release(key)
+
+
 def collect_mouse_events(duration: float) -> List[Events]:
     start = default_timer()
     end = start + duration
@@ -32,29 +77,6 @@ def collect_mouse_events(duration: float) -> List[Events]:
             if (ev := evs.get(timeout=dur)) is not None:
                 events.append(ev)
     return events
-
-
-def loop_until_click(
-    *,
-    init: int,
-    test: int,
-    review: int,
-) -> None:
-    LOGGER.info("Initializing... (please go to https://skritter.com/study)")
-    step = 0.01
-    for _ in tqdm(range(int(init / step))):
-        sleep(step)
-
-    LOGGER.info("Running...")
-    keyboard = Controller()
-    for dur, key in cycle([(test, Key.enter), (review, "3")]):
-        events = collect_mouse_events(dur)
-        if any(isinstance(event, Events.Click) for event in events):
-            LOGGER.info("Mouse clicked; aborting...")
-            return
-        else:
-            keyboard.press(key)
-            keyboard.release(key)
 
 
 __version__ = "0.0.4"
