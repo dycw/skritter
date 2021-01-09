@@ -28,7 +28,7 @@ LOGGER = getLogger(__name__)
 
 def loop(
     *,
-    init: int,
+    init: float,
     test: float,
     review: float,
 ) -> None:
@@ -41,21 +41,19 @@ def loop(
     press_3()
     for phase in cycle(Phase):
         if phase is Phase.test:
-            sleep(test)
-            press(Key.enter)
+            if count_clicks(test):
+                return log_end()
+            else:
+                press(Key.enter)
         elif phase is Phase.review:
-            events = collect_events(review)
-            clicks = sum(
-                isinstance(e, Events.Click) and e.pressed for e in events
-            )
+            clicks = count_clicks(review)
             if clicks == 0:
                 press_3()
             elif clicks == 1:
-                LOGGER.info("Marking as forgot...")
+                LOGGER.info("Marking as forgotten...")
                 press("1")
             else:
-                LOGGER.info("Ending session...")
-                return
+                return log_end()
         else:
             raise ValueError(f"Invalid phase: {phase}")
 
@@ -86,4 +84,13 @@ def collect_events(duration: float) -> List[Events]:
     return events
 
 
-__version__ = "0.0.4"
+def count_clicks(duration: float) -> int:
+    events = collect_events(duration)
+    return sum(isinstance(e, Events.Click) and e.pressed for e in events)
+
+
+def log_end() -> None:
+    LOGGER.info("Ending session...")
+
+
+__version__ = "0.0.5"
