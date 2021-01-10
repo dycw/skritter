@@ -93,4 +93,4 @@ def log_end() -> None:
     LOGGER.info("Ending session...")
 
 
-__version__ = "0.0.5"
+__version__ = "0.0.6"
