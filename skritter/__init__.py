@@ -39,21 +39,30 @@ def loop(
 
     LOGGER.info("Running...")
     press_3()
+    skip_review = False
     for phase in cycle(Phase):
+        LOGGER.info(phase)
         if phase is Phase.test:
-            if count_clicks(test):
-                return log_end()
-            else:
-                press(Key.enter)
-        elif phase is Phase.review:
-            clicks = count_clicks(review)
-            if clicks == 0:
-                press_3()
+            if (clicks := count_clicks(test)) == 0:
+                press_enter()
             elif clicks == 1:
-                LOGGER.info("Marking as forgotten...")
-                press("1")
-            else:
+                mark_as_forgotten()
+                press_enter()
+                press_1()
+                skip_review |= True
+            elif clicks == 2:
                 return log_end()
+        elif phase is Phase.review:
+            if skip_review:
+                skip_review &= False
+            else:
+                if (clicks := count_clicks(review)) == 0:
+                    press_3()
+                elif clicks == 1:
+                    mark_as_forgotten()
+                    press_1()
+                else:
+                    return log_end()
         else:
             raise ValueError(f"Invalid phase: {phase}")
 
@@ -63,10 +72,22 @@ class Phase(Enum):
     review = auto()
 
 
+def mark_as_forgotten() -> None:
+    LOGGER.info("Marking as forgotten...")
+
+
 def press(key: Any) -> None:
     keyboard = Controller()
     keyboard.press(key)
     keyboard.release(key)
+
+
+def press_enter() -> None:
+    press(Key.enter)
+
+
+def press_1() -> None:
+    press("1")
 
 
 def press_3() -> None:
@@ -93,4 +114,4 @@ def log_end() -> None:
     LOGGER.info("Ending session...")
 
 
-__version__ = "0.0.6"
+__version__ = "0.0.7"
