@@ -117,4 +117,4 @@ def count_clicks(duration: float, max_clicks: int) -> int:
     return clicks
 
 
-__version__ = "0.0.7"
+__version__ = "0.0.8"
