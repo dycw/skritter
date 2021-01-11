@@ -30,6 +30,7 @@ def loop(
     init: float,
     test: float,
     review: float,
+    review_forgotten: float,
 ) -> None:
     LOGGER.info("Initializing... (please go to https://skritter.com/study)")
     step = 0.01
@@ -47,7 +48,7 @@ def loop(
             elif clicks == 1:
                 log_forgotten()
                 press_enter()
-                press_1_and_sleep()
+                press_1_and_sleep(review_forgotten)
                 skip_review |= True
             else:
                 return log_end()
@@ -59,7 +60,7 @@ def loop(
                     press_3()
                 elif clicks == 1:
                     log_forgotten()
-                    press_1_and_sleep()
+                    press_1_and_sleep(review_forgotten)
                 else:
                     return log_end()
         else:
@@ -93,11 +94,10 @@ def press_1() -> None:
     press("1")
 
 
-def press_1_and_sleep() -> None:
+def press_1_and_sleep(review: float) -> None:
     press_1()
-    sleep(1.0)
     press(Key.left)
-    sleep(2.0)
+    sleep(review)
     press_1()
 
 
