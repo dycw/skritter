@@ -8,7 +8,6 @@ from sys import stdout
 from time import sleep
 from timeit import default_timer
 from typing import Any
-from typing import List
 
 from pynput.keyboard import Controller
 from pynput.keyboard import Key
@@ -31,6 +30,7 @@ def loop(
     init: float,
     test: float,
     review: float,
+    review_forgotten: float,
 ) -> None:
     LOGGER.info("Initializing... (please go to https://skritter.com/study)")
     step = 0.01
@@ -43,24 +43,24 @@ def loop(
     for phase in cycle(Phase):
         LOGGER.info(phase)
         if phase is Phase.test:
-            if (clicks := count_clicks(test)) == 0:
+            if (clicks := count_clicks(duration=test, max_clicks=2)) == 0:
                 press_enter()
             elif clicks == 1:
-                mark_as_forgotten()
+                log_forgotten()
                 press_enter()
-                press_1()
+                press_1_and_sleep(review_forgotten)
                 skip_review |= True
-            elif clicks == 2:
+            else:
                 return log_end()
         elif phase is Phase.review:
             if skip_review:
                 skip_review &= False
             else:
-                if (clicks := count_clicks(review)) == 0:
+                if (clicks := count_clicks(duration=review, max_clicks=2)) == 0:
                     press_3()
                 elif clicks == 1:
-                    mark_as_forgotten()
-                    press_1()
+                    log_forgotten()
+                    press_1_and_sleep(review_forgotten)
                 else:
                     return log_end()
         else:
@@ -72,7 +72,11 @@ class Phase(Enum):
     review = auto()
 
 
-def mark_as_forgotten() -> None:
+def log_end() -> None:
+    LOGGER.info("Ending session...")
+
+
+def log_forgotten() -> None:
     LOGGER.info("Marking as forgotten...")
 
 
@@ -90,28 +94,27 @@ def press_1() -> None:
     press("1")
 
 
+def press_1_and_sleep(review: float) -> None:
+    press_1()
+    press(Key.left)
+    sleep(review)
+    press_1()
+
+
 def press_3() -> None:
     press("3")
 
 
-def collect_events(duration: float) -> List[Events]:
+def count_clicks(duration: float, max_clicks: int) -> int:
     start = default_timer()
     end = start + duration
-    events: List[Events] = []
-    while (dur := end - default_timer()) > 0.0:
-        with Events() as evs:
-            if (ev := evs.get(timeout=dur)) is not None:
-                events.append(ev)
-    return events
+    clicks = 0
+    while ((dur := end - default_timer()) > 0.0) and (clicks < max_clicks):
+        with Events() as events:
+            event = events.get(timeout=dur)
+            if isinstance(event, Events.Click) and event.pressed:
+                clicks += 1
+    return clicks
 
 
-def count_clicks(duration: float) -> int:
-    events = collect_events(duration)
-    return sum(isinstance(e, Events.Click) and e.pressed for e in events)
-
-
-def log_end() -> None:
-    LOGGER.info("Ending session...")
-
-
-__version__ = "0.0.7"
+__version__ = "0.0.8"
