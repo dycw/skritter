@@ -8,7 +8,6 @@ from sys import stdout
 from time import sleep
 from timeit import default_timer
 from typing import Any
-from typing import List
 
 from pynput.keyboard import Controller
 from pynput.keyboard import Key
@@ -46,7 +45,7 @@ def loop(
             if (clicks := count_clicks(test)) == 0:
                 press_enter()
             elif clicks == 1:
-                mark_as_forgotten()
+                log_forgotten()
                 press_enter()
                 press_1()
                 skip_review |= True
@@ -59,7 +58,7 @@ def loop(
                 if (clicks := count_clicks(review)) == 0:
                     press_3()
                 elif clicks == 1:
-                    mark_as_forgotten()
+                    log_forgotten()
                     press_1()
                 else:
                     return log_end()
@@ -72,7 +71,11 @@ class Phase(Enum):
     review = auto()
 
 
-def mark_as_forgotten() -> None:
+def log_end() -> None:
+    LOGGER.info("Ending session...")
+
+
+def log_forgotten() -> None:
     LOGGER.info("Marking as forgotten...")
 
 
@@ -94,24 +97,16 @@ def press_3() -> None:
     press("3")
 
 
-def collect_events(duration: float) -> List[Events]:
+def count_clicks(duration: float) -> int:
     start = default_timer()
     end = start + duration
-    events: List[Events] = []
+    clicks = 0
     while (dur := end - default_timer()) > 0.0:
-        with Events() as evs:
-            if (ev := evs.get(timeout=dur)) is not None:
-                events.append(ev)
-    return events
-
-
-def count_clicks(duration: float) -> int:
-    events = collect_events(duration)
-    return sum(isinstance(e, Events.Click) and e.pressed for e in events)
-
-
-def log_end() -> None:
-    LOGGER.info("Ending session...")
+        with Events() as events:
+            event = events.get(timeout=dur)
+            if isinstance(event, Events.Click) and event.pressed:
+                clicks += 1
+    return clicks
 
 
 __version__ = "0.0.7"
