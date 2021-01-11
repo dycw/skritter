@@ -15,12 +15,18 @@ DEFAULT_REVIEW_FORGOTTEN = 1.0
 @option("--test", default=DEFAULT_TEST, type=float)
 @option("--review", default=DEFAULT_REVIEW, type=float)
 @option("--review-forgotten", default=DEFAULT_REVIEW_FORGOTTEN, type=float)
-def main(*, init: float, test: float, review: float) -> None:
+def main(
+    *,
+    init: float,
+    test: float,
+    review: float,
+    review_forgotten: float,
+) -> None:
     loop(
         init=init,
         test=test,
         review=review,
-        review_forgotten=DEFAULT_REVIEW_FORGOTTEN,
+        review_forgotten=review_forgotten,
     )
 
 
