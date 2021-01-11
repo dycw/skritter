@@ -42,24 +42,24 @@ def loop(
     for phase in cycle(Phase):
         LOGGER.info(phase)
         if phase is Phase.test:
-            if (clicks := count_clicks(test)) == 0:
+            if (clicks := count_clicks(duration=test, max_clicks=2)) == 0:
                 press_enter()
             elif clicks == 1:
                 log_forgotten()
                 press_enter()
-                press_1()
+                press_1_and_sleep()
                 skip_review |= True
-            elif clicks == 2:
+            else:
                 return log_end()
         elif phase is Phase.review:
             if skip_review:
                 skip_review &= False
             else:
-                if (clicks := count_clicks(review)) == 0:
+                if (clicks := count_clicks(duration=review, max_clicks=2)) == 0:
                     press_3()
                 elif clicks == 1:
                     log_forgotten()
-                    press_1()
+                    press_1_and_sleep()
                 else:
                     return log_end()
         else:
@@ -93,15 +93,23 @@ def press_1() -> None:
     press("1")
 
 
+def press_1_and_sleep() -> None:
+    press_1()
+    sleep(1.0)
+    press(Key.left)
+    sleep(2.0)
+    press_1()
+
+
 def press_3() -> None:
     press("3")
 
 
-def count_clicks(duration: float) -> int:
+def count_clicks(duration: float, max_clicks: int) -> int:
     start = default_timer()
     end = start + duration
     clicks = 0
-    while (dur := end - default_timer()) > 0.0:
+    while ((dur := end - default_timer()) > 0.0) and (clicks < max_clicks):
         with Events() as events:
             event = events.get(timeout=dur)
             if isinstance(event, Events.Click) and event.pressed:
