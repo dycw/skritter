@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from enum import auto
 from enum import Enum
 from itertools import cycle
