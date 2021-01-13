@@ -27,10 +27,10 @@ basicConfig(
 )
 
 
+DEFAULT_PAUSE = 1.0
 DEFAULT_TEST = 1.5
 DEFAULT_REVIEW = 1.5
 DEFAULT_FORGOTTEN = 3.0
-DEFAULT_PAUSE = 1.0
 
 
 _CONTROLLER = Controller()
@@ -74,16 +74,16 @@ class FailMsg(Enum):
 
 
 @command()
+@option("--pause", default=DEFAULT_PAUSE, type=float)
 @option("--test", default=DEFAULT_TEST, type=float)
 @option("--review", default=DEFAULT_REVIEW, type=float)
 @option("--forgotten", default=DEFAULT_FORGOTTEN, type=float)
-@option("--pause", default=DEFAULT_PAUSE, type=float)
 def main(
     *,
+    pause: float,
     test: float,
     review: float,
     forgotten: float,
-    pause: float,
 ) -> None:
     _LOGGER.info("Initializing...")
     state = State.paused
@@ -92,21 +92,15 @@ def main(
             _LOGGER.info("Shutting down...")
             return
         else:
-            state = advance(
-                state,
-                test,
-                review,
-                forgotten,
-                pause,
-            )
+            state = advance(state, pause, test, review, forgotten)
 
 
 def advance(
     state: "State",
+    pause: float,
     test: float,
     review: float,
     forgotten: float,
-    pause: float,
 ) -> "State":
     action = get_action(state, pause, test, review, forgotten)
     if action is Action.unpause:
