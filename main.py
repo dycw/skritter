@@ -28,18 +28,29 @@ basicConfig(
 )
 
 
-DEFAULT_INIT = 2.0
-DEFAULT_TEST = 1.25
-DEFAULT_REVIEW = 2.0
-DEFAULT_FORGOTTEN = 1.0
+# DEFAULT_INIT = 2.0
+# DEFAULT_TEST = 1.25
+# DEFAULT_REVIEW = 2.0
+# DEFAULT_FORGOTTEN = 1.0
+DEFAULT_INIT = 5.0
+DEFAULT_TEST = 5.0
+DEFAULT_REVIEW = 5.0
+DEFAULT_FORGOTTEN = 5.0
 
 
 _CONTROLLER = Controller()
-_DEFAULT_TQDM_STEP = 0.1
 _LOGGER = getLogger(__name__)
+_MARKING_TEMPLATE = "Marking {0} as forgotten..."
+_MARKING_CURRENT = _MARKING_TEMPLATE.format("current")
+_TQDM_STEP = 0.1
 
 
-def loop(
+@command()
+@option("--init", default=DEFAULT_INIT, type=float)
+@option("--test", default=DEFAULT_TEST, type=float)
+@option("--review", default=DEFAULT_REVIEW, type=float)
+@option("--forgotten", default=DEFAULT_FORGOTTEN, type=float)
+def main(
     *,
     init: float,
     test: float,
@@ -55,34 +66,36 @@ def loop(
             status = get_status(dur=review, desc="Reviewing")
         else:
             raise ValueError(f"Invalid phase: {phase}")
-        if status is Status.success:
+        if (phase is Phase.test) and (status is Status.success):
+            _CONTROLLER.tap("3")
             _CONTROLLER.tap(Key.enter)
-        elif status is Status.fail_current:
+        elif (phase is Phase.test) and (status is Status.fail_current):
             _LOGGER.info("Marking current as forgotten...")
-            if phase is Phase.test:
-                _CONTROLLER.tap(Key.enter)
-                forget_previous(forgotten, phases)
-            elif phase is Phase.review:
-                forget_previous(forgotten, phases)
-            else:
-                raise ValueError(f"Invalid phase: {phase}")
+            _CONTROLLER.tap(Key.enter)
+            _CONTROLLER.tap("1")
+            fail_previous(forgotten, phases)
+        elif (phase is Phase.review) and (status is Status.success):
+            _CONTROLLER.tap("3")
+        elif (phase is Phase.review) and (status is Status.fail_current):
+            _LOGGER.info("Marking current as forgotten...")
+            fail_current(forgotten=forgotten, phases=phases)
         elif status is Status.fail_previous:
-            _LOGGER.info("Marking previous as forgotten...")
-            forget_previous(forgotten, phases)
+            _LOGGER.info(_MARKING_TEMPLATE.format("previous"))
+            fail_previous(forgotten=forgotten, phases=phases)
         elif status is Status.terminate:
             _LOGGER.info("Terminating program...")
             return
         else:
-            raise ValueError(f"Invalid status: {status}")
+            raise ValueError(f"Invalid phase/status: {phase}, {status}")
 
 
 def tqdm_sleep(dur: float, desc: str) -> None:
-    for _ in tqdm_range(dur=dur, desc=desc):
-        sleep(_DEFAULT_TQDM_STEP)
+    for _ in tqdm_dur(dur=dur, desc=desc):
+        sleep(_TQDM_STEP)
 
 
-def tqdm_range(dur: float, desc: str) -> Iterator[None]:
-    for _ in tqdm(range(int(dur / _DEFAULT_TQDM_STEP)), desc=desc):
+def tqdm_dur(dur: float, desc: str) -> Iterator[None]:
+    for _ in tqdm(range(int(dur / _TQDM_STEP)), desc=desc):
         yield None
 
 
@@ -92,19 +105,18 @@ class Phase(Enum):
 
 
 def get_status(dur: float, desc: str) -> "Status":
-    total = int(dur / _DEFAULT_TQDM_STEP)
-    for _ in tqdm(range(total), desc=desc):
-        end = default_timer() + dur
+    for _ in tqdm_dur(dur=dur, desc=desc):
+        end = default_timer() + _TQDM_STEP
         while (loop_dur := end - default_timer()) > 0.0:
             with Events() as events:
                 event = events.get(timeout=loop_dur)
-                if isinstance(event, Events.Release):
-                    if event.key is Key.ctrl:
+                if isinstance(event, Events.Press):
+                    if event.key == Key.ctrl:
                         return Status.fail_current
-                    elif event is Key.shift:
+                    elif event == Key.shift:
                         return Status.fail_previous
-                elif isinstance(event, Events.Press) and (event.key is Key.esc):
-                    return Status.terminate
+                    elif event.key == Key.esc:
+                        return Status.terminate
     return Status.success
 
 
@@ -115,38 +127,21 @@ class Status(Enum):
     terminate = auto()
 
 
-def forget_previous(
+def fail_previous(
     forgotten: float,
     phases: peekable,
 ) -> None:
-
     _CONTROLLER.tap(Key.left)
+    fail_current(forgotten=forgotten, phases=phases)
+
+
+def fail_current(forgotten: float, phases: peekable) -> None:
     _CONTROLLER.tap("1")
     _CONTROLLER.tap(Key.left)
-    tqdm_sleep(dur=forgotten, desc="Reviewing forgotten...")
+    tqdm_sleep(dur=forgotten, desc="Confirming")
     _CONTROLLER.tap(Key.right)
     while phases.peek() is not Phase.test:
         next(phases)
-
-
-@command()
-@option("--init", default=DEFAULT_INIT, type=float)
-@option("--test", default=DEFAULT_TEST, type=float)
-@option("--review", default=DEFAULT_REVIEW, type=float)
-@option("--forgotten", default=DEFAULT_FORGOTTEN, type=float)
-def main(
-    *,
-    init: float,
-    test: float,
-    review: float,
-    forgotten: float,
-) -> None:
-    loop(
-        init=init,
-        test=test,
-        review=review,
-        forgotten=forgotten,
-    )
 
 
 if __name__ == "__main__":
