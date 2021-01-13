@@ -231,7 +231,11 @@ def get_action(
     state: "State",
     actions: Type[_ENUM_LIKE],
 ) -> Optional[_ENUM_LIKE]:
-    for _ in tqdm(range(int(duration / _TQDM_STEP)), desc=str(state)):
+    for _ in tqdm(
+        range(int(duration / _TQDM_STEP)),
+        desc=str(state),
+        bar_format="{desc} {bar} {percentage:3.0f}%",
+    ):
         end = default_timer() + _TQDM_STEP
         while (dur := end - default_timer()) > 0.0:
             with Events() as events:
