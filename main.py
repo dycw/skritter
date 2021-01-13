@@ -7,9 +7,7 @@ from logging import basicConfig
 from logging import getLogger
 from logging import INFO
 from sys import stdout
-from time import sleep
 from timeit import default_timer
-from typing import Iterator
 from typing import Optional
 from typing import Type
 from typing import TypeVar
@@ -32,6 +30,7 @@ basicConfig(
 )
 
 
+DEFAULT_INIT = 2.0
 DEFAULT_TEST = 1.5
 DEFAULT_REVIEW = 1.5
 DEFAULT_FORGOTTEN = 3.0
@@ -45,7 +44,7 @@ _TQDM_STEP = 0.1
 
 
 class State(Enum):
-    pre_start = auto()
+    init = auto()
     test = auto()
     test_paused = auto()
     review = auto()
@@ -60,8 +59,8 @@ class State(Enum):
 
 
 @unique
-class PreStartAction(Enum):
-    unpause = Key.esc
+class InitAction(Enum):
+    pause = Key.esc
     shut_down = "q"
 
 
@@ -96,18 +95,20 @@ class FailMsg(Enum):
 
 
 @command()
+@option("--init", default=DEFAULT_INIT, type=float)
 @option("--test", default=DEFAULT_TEST, type=float)
 @option("--review", default=DEFAULT_REVIEW, type=float)
 @option("--forgotten", default=DEFAULT_FORGOTTEN, type=float)
 def main(
     *,
+    init: float,
     test: float,
     review: float,
     forgotten: float,
 ) -> None:
-    state = State.pre_start
+    state = State.init
     while (
-        state := advance(state, test, review, forgotten)
+        state := advance(state, init, test, review, forgotten)
     ) is not State.shut_down:
         pass
     _LOGGER.info("Shutting down...")
@@ -115,32 +116,33 @@ def main(
 
 def advance(
     state: "State",
+    init: float,
     test: float,
     review: float,
     forgotten: float,
 ) -> "State":
     durations = {
+        State.init: init,
         State.test: test,
         State.review: review,
         State.forgotten: forgotten,
     }
     duration = durations.get(state, 60.0)
 
-    if state is State.pre_start:
-        pre_start_action = get_action(
+    if state is State.init:
+        init_action = get_action(
             duration=duration,
             state=state,
-            actions=PreStartAction,
+            actions=InitAction,
         )
-        if pre_start_action is None:
-            return state
-        elif pre_start_action is PreStartAction.unpause:
-            _LOGGER.info("Starting tests...")
+        if init_action is None:
             return State.test
-        elif pre_start_action is PreStartAction.shut_down:
+        elif init_action is InitAction.pause:
+            return pause_test()
+        elif init_action is InitAction.shut_down:
             return State.shut_down
         else:
-            raise ValueError(f"Invalid action: {pre_start_action}")
+            raise ValueError(f"Invalid action: {init_action}")
 
     elif state in {State.test, State.test_paused}:
         test_action = get_action(
@@ -153,8 +155,7 @@ def advance(
             _CONTROLLER.tap(Key.enter)
             return State.review
         elif (state is State.test) and (test_action is TestAction.toggle_pause):
-            _LOGGER.info("Pausing test...")
-            return State.test_paused
+            return pause_test()
         elif (state is State.test_paused) and (test_action is None):
             return State.test_paused
         elif (state is State.test_paused) and (
@@ -225,22 +226,12 @@ def advance(
         raise ValueError(f"Invalid state: {state}")
 
 
-def tqdm_sleep(duration: float, state: "State") -> None:
-    for _ in tqdm_duration(duration=duration, state=state):
-        sleep(_TQDM_STEP)
-
-
-def tqdm_duration(duration: float, state: "State") -> Iterator[None]:
-    for _ in tqdm(range(int(duration / _TQDM_STEP)), desc=str(state)):
-        yield None
-
-
 def get_action(
     duration: float,
     state: "State",
     actions: Type[_ENUM_LIKE],
 ) -> Optional[_ENUM_LIKE]:
-    for _ in tqdm_duration(duration=duration, state=state):
+    for _ in tqdm(range(int(duration / _TQDM_STEP)), desc=str(state)):
         end = default_timer() + _TQDM_STEP
         while (dur := end - default_timer()) > 0.0:
             with Events() as events:
@@ -269,6 +260,11 @@ def fail_current_review() -> "State":
     _CONTROLLER.tap("1")
     _CONTROLLER.tap(Key.left)
     return State.forgotten
+
+
+def pause_test() -> "State":
+    _LOGGER.info("Pausing test...")
+    return State.test_paused
 
 
 def pause_review() -> "State":
