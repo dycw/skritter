@@ -246,12 +246,23 @@ def get_action(
             with Events() as events:
                 event = events.get(timeout=dur)
                 if isinstance(event, Events.Press):
+                    key = event.key
                     with suppress(StopIteration):
-                        return next(
-                            action
-                            for action in actions
-                            if action.value is event.key
-                        )
+                        try:
+                            char = key.char
+                        except AttributeError:
+                            return next(
+                                action
+                                for action in actions
+                                if action.value is key
+                            )
+                        else:
+                            return next(
+                                action
+                                for action in actions
+                                if getattr(action.value, "char", None) == char
+                            )
+
     return None
 
 
