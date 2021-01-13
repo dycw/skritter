@@ -84,6 +84,36 @@ class FailMsg(Enum):
         return f"Marking {self.name} as forgotten..."
 
 
+@command()
+@option("--init", default=DEFAULT_INIT, type=float)
+@option("--test", default=DEFAULT_TEST, type=float)
+@option("--review", default=DEFAULT_REVIEW, type=float)
+@option("--forgotten", default=DEFAULT_FORGOTTEN, type=float)
+@option("--pause", default=DEFAULT_PAUSE, type=float)
+def main(
+    *,
+    init: float,
+    test: float,
+    review: float,
+    forgotten: float,
+    pause: float,
+) -> None:
+    tqdm_sleep(duration=init, state=State.initialize)
+    states = States(curr=State.test)
+    while True:
+        if states.curr is State.shut_down:
+            _LOGGER.info("Shutting down...")
+            break
+        else:
+            states = advance(
+                states,
+                test,
+                review,
+                forgotten,
+                pause,
+            )
+
+
 def advance(
     states: "States",
     test: float,
@@ -128,36 +158,6 @@ def advance(
         return States(curr=State.shut_down)
     else:
         raise ValueError(f"Invalid action: {action}")
-
-
-@command()
-@option("--init", default=DEFAULT_INIT, type=float)
-@option("--test", default=DEFAULT_TEST, type=float)
-@option("--review", default=DEFAULT_REVIEW, type=float)
-@option("--forgotten", default=DEFAULT_FORGOTTEN, type=float)
-@option("--pause", default=DEFAULT_PAUSE, type=float)
-def main(
-    *,
-    init: float,
-    test: float,
-    review: float,
-    forgotten: float,
-    pause: float,
-) -> None:
-    tqdm_sleep(duration=init, state=State.initialize)
-    states = States(curr=State.test)
-    while True:
-        if states.curr is State.shut_down:
-            _LOGGER.info("Shutting down...")
-            break
-        else:
-            states = advance(
-                states,
-                test,
-                review,
-                forgotten,
-                pause,
-            )
 
 
 def tqdm_sleep(duration: float, state: "State") -> None:
