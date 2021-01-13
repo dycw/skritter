@@ -30,11 +30,11 @@ basicConfig(
 )
 
 
-DEFAULT_INIT = 2.0 * 3.0
-DEFAULT_TEST = 1.5 * 3.0
-DEFAULT_CHECK_ANSWER = 1.5 * 3.0
-DEFAULT_REVIEW_FORGOTTEN = 3.0 * 3.0
-DEFAULT_PAUSE = 1.0 * 3.0
+DEFAULT_INIT = 2.0
+DEFAULT_TEST = 1.5
+DEFAULT_REVIEW = 1.5
+DEFAULT_FORGOTTEN = 3.0
+DEFAULT_PAUSE = 1.0
 
 
 _CONTROLLER = Controller()
@@ -99,7 +99,8 @@ def advance(
         return States(curr=State.review)
     elif action is Action.test_fail_current:
         _LOGGER.info(FailMsg.current)
-        return States(curr=fail_current_test())
+        _CONTROLLER.tap("1")
+        return States(curr=fail_previous())
     elif action is Action.fail_previous:
         _LOGGER.info(FailMsg.previous)
         return States(curr=fail_previous())
@@ -124,7 +125,6 @@ def advance(
         else:
             return States(curr=pre_pause)
     elif action is Action.shut_down:
-        _LOGGER.info("Shutting down...")
         return States(curr=State.shut_down)
     else:
         raise ValueError(f"Invalid action: {action}")
@@ -133,15 +133,15 @@ def advance(
 @command()
 @option("--init", default=DEFAULT_INIT, type=float)
 @option("--test", default=DEFAULT_TEST, type=float)
-@option("--check-answer", default=DEFAULT_CHECK_ANSWER, type=float)
-@option("--review-forgotten", default=DEFAULT_REVIEW_FORGOTTEN, type=float)
+@option("--review", default=DEFAULT_REVIEW, type=float)
+@option("--forgotten", default=DEFAULT_FORGOTTEN, type=float)
 @option("--pause", default=DEFAULT_PAUSE, type=float)
 def main(
     *,
     init: float,
     test: float,
-    check_answer: float,
-    review_forgotten: float,
+    review: float,
+    forgotten: float,
     pause: float,
 ) -> None:
     tqdm_sleep(duration=init, state=State.initialize)
@@ -154,8 +154,8 @@ def main(
             states = advance(
                 states,
                 test,
-                check_answer,
-                review_forgotten,
+                review,
+                forgotten,
                 pause,
             )
 
@@ -216,11 +216,6 @@ def get_action(
                         if key is Key.esc:
                             return Action.shut_down
     return default
-
-
-def fail_current_test() -> "State":
-    _CONTROLLER.tap("1")
-    return fail_previous()
 
 
 def fail_previous() -> "State":
