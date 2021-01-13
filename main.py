@@ -124,7 +124,7 @@ def advance(
         State.review: review,
         State.forgotten: forgotten,
     }
-    duration = durations.get(state, 1.0)
+    duration = durations.get(state, 60.0)
 
     if state is State.pre_start:
         pre_start_action = get_action(
@@ -193,7 +193,7 @@ def advance(
             review_action is ReviewAction.toggle_pause
         ):
             _LOGGER.info("Unpausing review...")
-            return State.review_paused
+            return State.review
         elif review_action is ReviewAction.fail_current:
             _LOGGER.info(FailMsg.current)
             return fail_current_review()
