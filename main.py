@@ -17,6 +17,7 @@ from click import option
 from pynput.keyboard import Controller
 from pynput.keyboard import Events
 from pynput.keyboard import Key
+from pynput.keyboard import KeyCode
 from tqdm import tqdm
 
 
@@ -29,15 +30,16 @@ basicConfig(
 )
 
 
-DEFAULT_INIT = 2.0
-DEFAULT_TEST = 1.5
-DEFAULT_CHECK_ANSWER = 1.5
-DEFAULT_REVIEW_FORGOTTEN = 3.0
-DEFAULT_PAUSE = 1.0
+DEFAULT_INIT = 2.0 * 3.0
+DEFAULT_TEST = 1.5 * 3.0
+DEFAULT_CHECK_ANSWER = 1.5 * 3.0
+DEFAULT_REVIEW_FORGOTTEN = 3.0 * 3.0
+DEFAULT_PAUSE = 1.0 * 3.0
 
 
 _CONTROLLER = Controller()
 _LOGGER = getLogger(__name__)
+_TILDE = KeyCode.from_char("`")
 _TQDM_STEP = 0.1
 
 
@@ -180,7 +182,7 @@ def get_action(
         mapping = {
             Key.ctrl: Action.test_fail_current,
             Key.shift: Action.fail_previous,
-            "`": Action.pause,
+            _TILDE: Action.pause,
         }
         default = Action.test_success
     elif state is State.review:
@@ -188,16 +190,16 @@ def get_action(
         mapping = {
             Key.ctrl: Action.review_fail_current,
             Key.shift: Action.fail_previous,
-            "`": Action.pause,
+            _TILDE: Action.pause,
         }
         default = Action.review_success
     elif state is State.forgotten:
         duration = forgotten
-        mapping = {"`": Action.pause}
+        mapping = {_TILDE: Action.pause}
         default = Action.finish_forgotten
     elif state is State.paused:
         duration = pause
-        mapping = {"`": Action.unpause}
+        mapping = {_TILDE: Action.unpause}
         default = Action.continue_pause
     else:
         raise ValueError(f"Invalid state: {state}")
