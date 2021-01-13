@@ -17,7 +17,6 @@ from click import option
 from pynput.keyboard import Controller
 from pynput.keyboard import Events
 from pynput.keyboard import Key
-from pynput.keyboard import KeyCode
 from tqdm import tqdm
 
 
@@ -39,8 +38,6 @@ DEFAULT_FORGOTTEN = 3.0
 _CONTROLLER = Controller()
 _ENUM_LIKE = TypeVar("_ENUM_LIKE", bound=Enum)
 _LOGGER = getLogger(__name__)
-_TILDE = KeyCode.from_char("`")
-_TQDM_STEP = 0.1
 
 
 class State(Enum):
@@ -231,12 +228,14 @@ def get_action(
     state: "State",
     actions: Type[_ENUM_LIKE],
 ) -> Optional[_ENUM_LIKE]:
+    step = 0.1
+
     for _ in tqdm(
-        range(int(duration / _TQDM_STEP)),
+        range(int(duration / step)),
         desc=str(state),
         bar_format="{desc} {bar} {percentage:3.0f}%",
     ):
-        end = default_timer() + _TQDM_STEP
+        end = default_timer() + step
         while (dur := end - default_timer()) > 0.0:
             with Events() as events:
                 event = events.get(timeout=dur)
