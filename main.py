@@ -28,16 +28,10 @@ basicConfig(
 )
 
 
-# 4 -# DEFAULT_INIT = 2.0
-#   3 -# DEFAULT_TEST = 1.25
-#   2 -# DEFAULT_REVIEW = 2.0
-#   1 -# DEFAULT_FORGOTTEN = 1.0
-
-
-DEFAULT_INIT = 5.0
-DEFAULT_TEST = 5.0
-DEFAULT_REVIEW = 5.0
-DEFAULT_FORGOTTEN = 5.0
+DEFAULT_INIT = 2.0
+DEFAULT_TEST = 1.5
+DEFAULT_REVIEW = 1.5
+DEFAULT_FORGOTTEN = 1.0
 
 
 _CONTROLLER = Controller()
@@ -74,7 +68,7 @@ class TqdmDesc(Enum):
     def __str__(self) -> str:
         max_len = max(len(desc.ing) for desc in TqdmDesc)
         template = f"{{:{max_len}}}"
-        return template.format(self.value)
+        return template.format(self.ing)
 
     @property
     def ing(self) -> str:
