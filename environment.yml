@@ -8,6 +8,7 @@ dependencies:
 
   # core
   - click = 7.1
+  - more-itertools = 8.6
   - pynput = 1.7
   - tqdm = 4.55
 
