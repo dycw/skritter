@@ -61,13 +61,13 @@ class State(Enum):
 
 @unique
 class PreStartAction(Enum):
-    pause = Key.escape
+    unpause = Key.esc
     shut_down = KeyCode.from_char("q")
 
 
 @unique
 class TestAction(Enum):
-    toggle_pause = Key.escape
+    toggle_pause = Key.esc
     fail_current = Key.ctrl
     fail_previous = Key.shift
     shut_down = KeyCode.from_char("q")
@@ -75,7 +75,7 @@ class TestAction(Enum):
 
 @unique
 class ReviewAction(Enum):
-    toggle_pause = Key.escape
+    toggle_pause = Key.esc
     fail_current = Key.ctrl
     fail_previous = Key.shift
     shut_down = KeyCode.from_char("q")
@@ -83,21 +83,8 @@ class ReviewAction(Enum):
 
 @unique
 class ForgottenAction(Enum):
-    pause = Key.escape
+    pause = Key.esc
     shut_down = KeyCode.from_char("q")
-
-
-class Action(Enum):
-    unpause = auto()
-    continue_pause = auto()
-    test_success = auto()
-    test_fail_current = auto()
-    fail_previous = auto()
-    pause = auto()
-    review_success = auto()
-    review_fail_current = auto()
-    finish_forgotten = auto()
-    shut_down = auto()
 
 
 class FailMsg(Enum):
@@ -118,13 +105,12 @@ def main(
     review: float,
     forgotten: float,
 ) -> None:
-    state = State.test_paused
-    while True:
-        if state is State.shut_down:
-            _LOGGER.info("Shutting down...")
-            return
-        else:
-            state = advance(state, test, review, forgotten)
+    state = State.pre_start
+    while (
+        state := advance(state, test, review, forgotten)
+    ) is not State.shut_down:
+        pass
+    _LOGGER.info("Shutting down...")
 
 
 def advance(
@@ -148,7 +134,7 @@ def advance(
         )
         if pre_start_action is None:
             return state
-        elif pre_start_action is PreStartAction.pause:
+        elif pre_start_action is PreStartAction.unpause:
             _LOGGER.info("Starting tests...")
             return State.test
         elif pre_start_action is PreStartAction.shut_down:
@@ -162,19 +148,20 @@ def advance(
             state=state,
             actions=TestAction,
         )
-        if test_action is None:
+        if (state is State.test) and (test_action is None):
             _CONTROLLER.tap("3")
             _CONTROLLER.tap(Key.enter)
             return State.review
-        elif test_action is TestAction.toggle_pause:
-            if state is State.test:
-                _LOGGER.info("Unpausing test...")
-                return State.test_paused
-            elif state is State.test_paused:
-                _LOGGER.info("Pausing test...")
-                return State.test
-            else:
-                raise ValueError(f"Invalid state: {state}")
+        elif (state is State.test) and (test_action is TestAction.toggle_pause):
+            _LOGGER.info("Pausing test...")
+            return State.test_paused
+        elif (state is State.test_paused) and (test_action is None):
+            return State.test_paused
+        elif (state is State.test_paused) and (
+            test_action is TestAction.toggle_pause
+        ):
+            _LOGGER.info("Unpausing test...")
+            return State.test
         elif test_action is TestAction.fail_current:
             _LOGGER.info(FailMsg.current)
             _CONTROLLER.tap("1")
@@ -185,7 +172,7 @@ def advance(
         elif test_action is TestAction.shut_down:
             return State.shut_down
         else:
-            raise ValueError(f"Invalid action: {test_action}")
+            raise ValueError(f"Invalid state/action: {state}/{test_action}")
 
     elif state in {State.review, State.review_paused}:
         review_action = get_action(
@@ -193,18 +180,21 @@ def advance(
             state=state,
             actions=ReviewAction,
         )
-        if review_action is None:
+        if (state is State.review) and (review_action is None):
             _CONTROLLER.tap("3")
             return State.test
-        elif review_action is ReviewAction.toggle_pause:
-            if state is State.test:
-                _LOGGER.info("Unpausing review...")
-                return State.review_paused
-            elif state is State.review_paused:
-                _LOGGER.info("Pausing review...")
-                return State.review
-            else:
-                raise ValueError(f"Invalid state: {state}")
+        elif (state is State.review) and (
+            review_action is ReviewAction.toggle_pause
+        ):
+            _LOGGER.info("Pausing review...")
+            return State.review_paused
+        elif (state is State.review_paused) and (review_action is None):
+            return State.review_paused
+        elif (state is State.review_paused) and (
+            review_action is ReviewAction.toggle_pause
+        ):
+            _LOGGER.info("Unpausing review...")
+            return State.review_paused
         elif review_action is ReviewAction.fail_current:
             _LOGGER.info(FailMsg.current)
             return fail_current_review()
@@ -214,7 +204,7 @@ def advance(
         elif review_action is ReviewAction.shut_down:
             return State.shut_down
         else:
-            raise ValueError(f"Invalid action: {review_action}")
+            raise ValueError(f"Invalid state/action: {state}, {review_action}")
 
     elif state is State.forgotten:
         forgotten_action = get_action(
