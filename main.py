@@ -28,10 +28,12 @@ basicConfig(
 )
 
 
-# DEFAULT_INIT = 2.0
-# DEFAULT_TEST = 1.25
-# DEFAULT_REVIEW = 2.0
-# DEFAULT_FORGOTTEN = 1.0
+# 4 -# DEFAULT_INIT = 2.0
+#   3 -# DEFAULT_TEST = 1.25
+#   2 -# DEFAULT_REVIEW = 2.0
+#   1 -# DEFAULT_FORGOTTEN = 1.0
+
+
 DEFAULT_INIT = 5.0
 DEFAULT_TEST = 5.0
 DEFAULT_REVIEW = 5.0
@@ -57,13 +59,13 @@ def main(
     review: float,
     forgotten: float,
 ) -> None:
-    tqdm_sleep(dur=init, desc="Initializing")
+    tqdm_sleep(dur=init, desc=TqdmDesc.initial)
     phases = peekable(cycle(Phase))
     for phase in phases:
         if phase is Phase.test:
-            status = get_status(dur=test, desc="Testing")
+            status = get_status(dur=test, desc=TqdmDesc.test)
         elif phase is Phase.review:
-            status = get_status(dur=review, desc="Reviewing")
+            status = get_status(dur=review, desc=TqdmDesc.review)
         else:
             raise ValueError(f"Invalid phase: {phase}")
         if (phase is Phase.test) and (status is Status.success):
@@ -89,13 +91,13 @@ def main(
             raise ValueError(f"Invalid phase/status: {phase}, {status}")
 
 
-def tqdm_sleep(dur: float, desc: str) -> None:
+def tqdm_sleep(dur: float, desc: "TqdmDesc") -> None:
     for _ in tqdm_dur(dur=dur, desc=desc):
         sleep(_TQDM_STEP)
 
 
-def tqdm_dur(dur: float, desc: str) -> Iterator[None]:
-    for _ in tqdm(range(int(dur / _TQDM_STEP)), desc=desc):
+def tqdm_dur(dur: float, desc: "TqdmDesc") -> Iterator[None]:
+    for _ in tqdm(range(int(dur / _TQDM_STEP)), desc=desc.padded):
         yield None
 
 
@@ -104,18 +106,18 @@ class Phase(Enum):
     review = auto()
 
 
-def get_status(dur: float, desc: str) -> "Status":
+def get_status(dur: float, desc: "TqdmDesc") -> "Status":
     for _ in tqdm_dur(dur=dur, desc=desc):
         end = default_timer() + _TQDM_STEP
         while (loop_dur := end - default_timer()) > 0.0:
             with Events() as events:
                 event = events.get(timeout=loop_dur)
                 if isinstance(event, Events.Press):
-                    if event.key == Key.ctrl:
+                    if event.key is Key.ctrl:
                         return Status.fail_current
-                    elif event == Key.shift:
+                    elif event.key is Key.shift:
                         return Status.fail_previous
-                    elif event.key == Key.esc:
+                    elif event.key is Key.esc:
                         return Status.terminate
     return Status.success
 
@@ -138,10 +140,23 @@ def fail_previous(
 def fail_current(forgotten: float, phases: peekable) -> None:
     _CONTROLLER.tap("1")
     _CONTROLLER.tap(Key.left)
-    tqdm_sleep(dur=forgotten, desc="Confirming")
+    tqdm_sleep(dur=forgotten, desc=TqdmDesc.confirm)
     _CONTROLLER.tap(Key.right)
     while phases.peek() is not Phase.test:
         next(phases)
+
+
+class TqdmDesc(Enum):
+    initial = "Initializing"
+    test = "Testing"
+    review = "Reviewing"
+    confirm = "Confirming"
+
+    @property
+    def padded(self) -> str:
+        max_len = max(len(desc.value) for desc in TqdmDesc)
+        template = f"{{:{max_len}}}"
+        return template.format(self.value)
 
 
 if __name__ == "__main__":
