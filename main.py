@@ -8,13 +8,14 @@ from logging import INFO
 from sys import stdout
 from time import sleep
 from timeit import default_timer
-from typing import Any
+from typing import Iterator
 
 from click import command
 from click import option
+from more_itertools import peekable
 from pynput.keyboard import Controller
+from pynput.keyboard import Events
 from pynput.keyboard import Key
-from pynput.mouse import Events
 from tqdm import tqdm
 
 
@@ -25,11 +26,17 @@ basicConfig(
     stream=stdout,
     style="{",
 )
+
+
 DEFAULT_INIT = 2.0
 DEFAULT_TEST = 1.25
 DEFAULT_REVIEW = 2.0
-DEFAULT_REVIEW_FORGOTTEN = 1.0
-LOGGER = getLogger(__name__)
+DEFAULT_FORGOTTEN = 1.0
+
+
+_CONTROLLER = Controller()
+_DEFAULT_TQDM_STEP = 0.1
+_LOGGER = getLogger(__name__)
 
 
 def loop(
@@ -37,41 +44,46 @@ def loop(
     init: float,
     test: float,
     review: float,
-    review_forgotten: float,
+    forgotten: float,
 ) -> None:
-    LOGGER.info("Initializing... (please go to https://skritter.com/study)")
-    step = 0.01
-    for _ in tqdm(range(int(init / step))):
-        sleep(step)
-
-    LOGGER.info("Running...")
-    press_3()
-    skip_review = False
-    for phase in cycle(Phase):
-        LOGGER.info(phase)
+    tqdm_sleep(dur=init, desc="Initializing")
+    phases = peekable(cycle(Phase))
+    for phase in phases:
         if phase is Phase.test:
-            if (clicks := count_clicks(duration=test, max_clicks=2)) == 0:
-                press_enter()
-            elif clicks == 1:
-                log_forgotten()
-                press_enter()
-                press_1_and_sleep(review_forgotten)
-                skip_review |= True
-            else:
-                return log_end()
+            status = get_status(dur=test, desc="Testing")
         elif phase is Phase.review:
-            if skip_review:
-                skip_review &= False
-            else:
-                if (clicks := count_clicks(duration=review, max_clicks=2)) == 0:
-                    press_3()
-                elif clicks == 1:
-                    log_forgotten()
-                    press_1_and_sleep(review_forgotten)
-                else:
-                    return log_end()
+            status = get_status(dur=review, desc="Reviewing")
         else:
             raise ValueError(f"Invalid phase: {phase}")
+        if status is Status.success:
+            _CONTROLLER.tap(Key.enter)
+        elif status is Status.fail_current:
+            _LOGGER.info("Marking current as forgotten...")
+            if phase is Phase.test:
+                _CONTROLLER.tap(Key.enter)
+                forget_previous(forgotten, phases)
+            elif phase is Phase.review:
+                forget_previous(forgotten, phases)
+            else:
+                raise ValueError(f"Invalid phase: {phase}")
+        elif status is Status.fail_previous:
+            _LOGGER.info("Marking previous as forgotten...")
+            forget_previous(forgotten, phases)
+        elif status is Status.terminate:
+            _LOGGER.info("Terminating program...")
+            return
+        else:
+            raise ValueError(f"Invalid status: {status}")
+
+
+def tqdm_sleep(dur: float, desc: str) -> None:
+    for _ in tqdm_range(dur=dur, desc=desc):
+        sleep(_DEFAULT_TQDM_STEP)
+
+
+def tqdm_range(dur: float, desc: str) -> Iterator[None]:
+    for _ in tqdm(range(int(dur / _DEFAULT_TQDM_STEP)), desc=desc):
+        yield None
 
 
 class Phase(Enum):
@@ -79,68 +91,61 @@ class Phase(Enum):
     review = auto()
 
 
-def log_end() -> None:
-    LOGGER.info("Ending session...")
+def get_status(dur: float, desc: str) -> "Status":
+    total = int(dur / _DEFAULT_TQDM_STEP)
+    for _ in tqdm(range(total), desc=desc):
+        end = default_timer() + dur
+        while (loop_dur := end - default_timer()) > 0.0:
+            with Events() as events:
+                event = events.get(timeout=loop_dur)
+                if isinstance(event, Events.Release):
+                    if event.key is Key.ctrl:
+                        return Status.fail_current
+                    elif event is Key.shift:
+                        return Status.fail_previous
+                elif isinstance(event, Events.Press) and (event.key is Key.esc):
+                    return Status.terminate
+    return Status.success
 
 
-def log_forgotten() -> None:
-    LOGGER.info("Marking as forgotten...")
+class Status(Enum):
+    success = auto()
+    fail_current = auto()
+    fail_previous = auto()
+    terminate = auto()
 
 
-def press(key: Any) -> None:
-    keyboard = Controller()
-    keyboard.press(key)
-    keyboard.release(key)
+def forget_previous(
+    forgotten: float,
+    phases: peekable,
+) -> None:
 
-
-def press_enter() -> None:
-    press(Key.enter)
-
-
-def press_1() -> None:
-    press("1")
-
-
-def press_1_and_sleep(review: float) -> None:
-    press_1()
-    press(Key.left)
-    sleep(review)
-    press_1()
-
-
-def press_3() -> None:
-    press("3")
-
-
-def count_clicks(duration: float, max_clicks: int) -> int:
-    start = default_timer()
-    end = start + duration
-    clicks = 0
-    while ((dur := end - default_timer()) > 0.0) and (clicks < max_clicks):
-        with Events() as events:
-            event = events.get(timeout=dur)
-            if isinstance(event, Events.Click) and event.pressed:
-                clicks += 1
-    return clicks
+    _CONTROLLER.tap(Key.left)
+    _CONTROLLER.tap("1")
+    _CONTROLLER.tap(Key.left)
+    tqdm_sleep(dur=forgotten, desc="Reviewing forgotten...")
+    _CONTROLLER.tap(Key.right)
+    while phases.peek() is not Phase.test:
+        next(phases)
 
 
 @command()
 @option("--init", default=DEFAULT_INIT, type=float)
 @option("--test", default=DEFAULT_TEST, type=float)
 @option("--review", default=DEFAULT_REVIEW, type=float)
-@option("--review-forgotten", default=DEFAULT_REVIEW_FORGOTTEN, type=float)
+@option("--forgotten", default=DEFAULT_FORGOTTEN, type=float)
 def main(
     *,
     init: float,
     test: float,
     review: float,
-    review_forgotten: float,
+    forgotten: float,
 ) -> None:
     loop(
         init=init,
         test=test,
         review=review,
-        review_forgotten=review_forgotten,
+        forgotten=forgotten,
     )
 
 
