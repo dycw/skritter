@@ -186,8 +186,7 @@ def advance(
         elif (state is State.review) and (
             review_action is ReviewAction.toggle_pause
         ):
-            _LOGGER.info("Pausing review...")
-            return State.review_paused
+            return pause_review()
         elif (state is State.review_paused) and (review_action is None):
             return State.review_paused
         elif (state is State.review_paused) and (
@@ -216,8 +215,7 @@ def advance(
             _CONTROLLER.tap(Key.right)
             return State.test
         elif forgotten_action is ForgottenAction.pause:
-            _LOGGER.info("Pausing review...")
-            return State.review_paused
+            return pause_review()
         elif forgotten_action is ForgottenAction.shut_down:
             return State.shut_down
         else:
@@ -266,6 +264,11 @@ def fail_current_review() -> "State":
     _CONTROLLER.tap("1")
     _CONTROLLER.tap(Key.left)
     return State.forgotten
+
+
+def pause_review() -> "State":
+    _LOGGER.info("Pausing review...")
+    return State.review_paused
 
 
 if __name__ == "__main__":
