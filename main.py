@@ -42,9 +42,43 @@ DEFAULT_FORGOTTEN = 5.0
 
 _CONTROLLER = Controller()
 _LOGGER = getLogger(__name__)
-_MARKING_TEMPLATE = "Marking {0} as forgotten..."
-_MARKING_CURRENT = _MARKING_TEMPLATE.format("current")
 _TQDM_STEP = 0.1
+
+
+class Forgotten(Enum):
+    current = auto()
+    previous = auto()
+
+    def __str__(self) -> str:
+        return f"Marking {self.name} as forgotten..."
+
+
+class Phase(Enum):
+    test = auto()
+    review = auto()
+
+
+class Status(Enum):
+    success = auto()
+    fail_current = auto()
+    fail_previous = auto()
+    terminate = auto()
+
+
+class TqdmDesc(Enum):
+    initial = auto()
+    test = auto()
+    review = auto()
+    confirm = auto()
+
+    def __str__(self) -> str:
+        max_len = max(len(desc.ing) for desc in TqdmDesc)
+        template = f"{{:{max_len}}}"
+        return template.format(self.value)
+
+    @property
+    def ing(self) -> str:
+        return self.name.title() + "ing"
 
 
 @command()
@@ -72,7 +106,7 @@ def main(
             _CONTROLLER.tap("3")
             _CONTROLLER.tap(Key.enter)
         elif (phase is Phase.test) and (status is Status.fail_current):
-            _LOGGER.info("Marking current as forgotten...")
+            _LOGGER.info(str(Forgotten.current))
             _CONTROLLER.tap(Key.enter)
             _CONTROLLER.tap("1")
             fail_previous(forgotten, phases)
@@ -82,7 +116,7 @@ def main(
             _LOGGER.info("Marking current as forgotten...")
             fail_current(forgotten=forgotten, phases=phases)
         elif status is Status.fail_previous:
-            _LOGGER.info(_MARKING_TEMPLATE.format("previous"))
+            _LOGGER.info(str(Forgotten.previous))
             fail_previous(forgotten=forgotten, phases=phases)
         elif status is Status.terminate:
             _LOGGER.info("Terminating program...")
@@ -97,13 +131,8 @@ def tqdm_sleep(dur: float, desc: "TqdmDesc") -> None:
 
 
 def tqdm_dur(dur: float, desc: "TqdmDesc") -> Iterator[None]:
-    for _ in tqdm(range(int(dur / _TQDM_STEP)), desc=desc.padded):
+    for _ in tqdm(range(int(dur / _TQDM_STEP)), desc=str(desc)):
         yield None
-
-
-class Phase(Enum):
-    test = auto()
-    review = auto()
 
 
 def get_status(dur: float, desc: "TqdmDesc") -> "Status":
@@ -122,13 +151,6 @@ def get_status(dur: float, desc: "TqdmDesc") -> "Status":
     return Status.success
 
 
-class Status(Enum):
-    success = auto()
-    fail_current = auto()
-    fail_previous = auto()
-    terminate = auto()
-
-
 def fail_previous(
     forgotten: float,
     phases: peekable,
@@ -144,19 +166,6 @@ def fail_current(forgotten: float, phases: peekable) -> None:
     _CONTROLLER.tap(Key.right)
     while phases.peek() is not Phase.test:
         next(phases)
-
-
-class TqdmDesc(Enum):
-    initial = "Initializing"
-    test = "Testing"
-    review = "Reviewing"
-    confirm = "Confirming"
-
-    @property
-    def padded(self) -> str:
-        max_len = max(len(desc.value) for desc in TqdmDesc)
-        template = f"{{:{max_len}}}"
-        return template.format(self.value)
 
 
 if __name__ == "__main__":
