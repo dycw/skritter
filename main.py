@@ -62,7 +62,7 @@ class State(Enum):
 @unique
 class PreStartAction(Enum):
     unpause = Key.esc
-    shut_down = KeyCode.from_char("q")
+    shut_down = "q"
 
 
 @unique
@@ -70,7 +70,7 @@ class TestAction(Enum):
     toggle_pause = Key.esc
     fail_current = Key.ctrl
     fail_previous = Key.shift
-    shut_down = KeyCode.from_char("q")
+    shut_down = "q"
 
 
 @unique
@@ -78,13 +78,13 @@ class ReviewAction(Enum):
     toggle_pause = Key.esc
     fail_current = Key.ctrl
     fail_previous = Key.shift
-    shut_down = KeyCode.from_char("q")
+    shut_down = "q"
 
 
 @unique
 class ForgottenAction(Enum):
     pause = Key.esc
-    shut_down = KeyCode.from_char("q")
+    shut_down = "q"
 
 
 class FailMsg(Enum):
@@ -249,20 +249,14 @@ def get_action(
                     key = event.key
                     with suppress(StopIteration):
                         try:
-                            char = key.char
+                            match = key.char
                         except AttributeError:
-                            return next(
-                                action
-                                for action in actions
-                                if action.value is key
-                            )
-                        else:
-                            return next(
-                                action
-                                for action in actions
-                                if getattr(action.value, "char", None) == char
-                            )
-
+                            match = key
+                        return next(
+                            action
+                            for action in actions
+                            if action.value == match
+                        )
     return None
 
 
