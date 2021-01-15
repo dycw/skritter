@@ -8,7 +8,7 @@ from logging import getLogger
 from logging import INFO
 from sys import stdout
 from timeit import default_timer
-from typing import Optional, Text
+from typing import Optional
 from typing import Type
 from typing import TypeVar
 
