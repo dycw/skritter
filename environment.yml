@@ -14,4 +14,8 @@ dependencies:
 
   # dev
   - bump2version = 1.0
-  - pre-commit = 2.9
+
+  # pip
+  - pip
+  - pip:
+    - -r .pre-commit-hooks/python/requirements.txt
