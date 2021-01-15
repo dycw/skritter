@@ -16,6 +16,8 @@ from click import command
 from click import option
 from pynput.keyboard import Controller
 from pynput.keyboard import Events
+
+import pynput
 from pynput.keyboard import Key
 from tqdm import tqdm
 
