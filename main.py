@@ -16,8 +16,6 @@ from click import command
 from click import option
 from pynput.keyboard import Controller
 from pynput.keyboard import Events
-
-import pynput
 from pynput.keyboard import Key
 from tqdm import tqdm
 
@@ -157,9 +155,7 @@ def advance(
             return pause_test()
         elif (state is State.test_paused) and (test_action is None):
             return State.test_paused
-        elif (state is State.test_paused) and (
-            test_action is TestAction.toggle_pause
-        ):
+        elif (state is State.test_paused) and (test_action is TestAction.toggle_pause):
             _LOGGER.info("Unpausing test...")
             return State.test
         elif test_action is TestAction.fail_current:
@@ -183,9 +179,7 @@ def advance(
         if (state is State.review) and (review_action is None):
             _CONTROLLER.tap("3")
             return State.test
-        elif (state is State.review) and (
-            review_action is ReviewAction.toggle_pause
-        ):
+        elif (state is State.review) and (review_action is ReviewAction.toggle_pause):
             return pause_review()
         elif (state is State.review_paused) and (review_action is None):
             return State.review_paused
@@ -249,9 +243,7 @@ def get_action(
                         except AttributeError:
                             match = key
                         return next(
-                            action
-                            for action in actions
-                            if action.value == match
+                            action for action in actions if action.value == match
                         )
     return None
 
