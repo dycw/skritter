@@ -11,4 +11,4 @@ dependencies:
   - tqdm = 4.55
   - pip
   - pip:
-      - -r .pre-commit-hooks/python/requirements.txt
+      - --requirement=.pre-commit-hooks/python/requirements.txt
