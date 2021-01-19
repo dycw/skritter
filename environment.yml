@@ -9,6 +9,4 @@ dependencies:
   - more-itertools = 8.6
   - pynput = 1.7
   - tqdm = 4.55
-  - pip
-  - pip:
-      - --requirement=.pre-commit-hooks/python/requirements.txt
+  - bump2version
