@@ -1,0 +1,9 @@
+repos:
+  - repo: https://github.com/dycw/pre-commit-hooks
+    rev: d71006c1e768bca8c78ac1045272c467e444690b
+    hooks:
+      - id: no-commit
+      - id: prettier
+      - id: python
+      - id: text
+      - id: universal

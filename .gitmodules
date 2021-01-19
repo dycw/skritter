@@ -1,4 +1,0 @@
-[submodule ".pre-commit-hooks"]
-	path = .pre-commit-hooks
-	url = git@github.com:dycw/pre-commit-hooks.git
-	branch = master
