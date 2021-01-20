@@ -1,3 +1,3 @@
 # skritter
 
-Script to automatically work through https://skritter.com/study
+Script to automatically work through [skritter](https://skritter.com/study).
