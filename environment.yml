@@ -10,3 +10,4 @@ dependencies:
   - pynput = 1.7
   - tqdm = 4.55
   - bump2version
+  - pre-commit
