@@ -86,7 +86,8 @@ def main(*, init: float, test: float, review: float, forgotten: float) -> None:
     while (
         state := advance(state, init, test, review, forgotten)
     ) is not State.shut_down:
-        logger.info("Shutting down...")
+        pass
+    logger.info("Shutting down...")
 
 
 def advance(
