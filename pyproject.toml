@@ -1,0 +1,45 @@
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.black]
+line-length = 80
+skip-magic-trailing-comma = true
+target-version = ["py38"]
+
+
+[tool.isort]
+atomic = true
+float_to_top = true
+force_single_line = true
+line_length = 80
+lines_after_imports = 2
+profile = "black"
+remove_redundant_aliases = true
+skip_gitignore = true
+src_paths = ["src"]
+virtual_env = ".venv/bin/python"
+
+
+[tool.poetry]
+name = "skritter"
+version = "0.0.0"
+description = "Script to automatically work through https://skritter.com/study"
+authors = ["Derek Wan <d.wan@icloud.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+click = "^7.1"
+loguru = "^0.5"
+more-itertools = "^8.7"
+python3-xlib = "^0.15"
+pynput = "^1.7"
+tqdm = "^4.59"
+
+[tool.poetry.dev-dependencies]
+pre-commit = "^2"
+
+[tool.poetry.scripts]
+skritter = "skritter:main"
