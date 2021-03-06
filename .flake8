@@ -1,0 +1,66 @@
+[flake8]
+max-line-length = 88
+min-python-version = 3.9
+per-file-ignores = */tests/*.py:S101
+show-source = True
+
+# ignore
+ignore = ANN101,ANN102,S322,A003,B008,FP003,FP004,FP005,FI10,FI11,FI12,FI13,FI14,FI15,FI16,FI17,FI18,PT013,PT019,SIM106,P101,N802,N803,N806,E203,W503,E501
+
+## flake8-annotations
+## ANN101   Missing type annotation for self in method
+## ANN102   Missing type annotation for cls in classmethod
+
+## flake8-bandit
+## S322    The input method in Python 2 will read from standard input, evaluate
+##         and run the resulting string as python source code. This is similar,
+##         though in many ways worse, then using eval. On Python 2, use
+##         raw_input instead, input is safe in Python 3
+
+## flake8-builtins
+## A003    class attribute ... is shadowing a python builtin
+
+## flake8-bugbear
+## B008    Do not perform function calls in argument defaults
+
+## flake8-fine-pytest
+## FP003   File ... is in the wrong directory
+## FP004   ... has too complex signature
+## FP005   ... has too many assert statements
+
+## flake8-future-import
+## FI10    __future__ import "division" missing
+## FI11    __future__ import "absolute_import" missing
+## FI12    __future__ import "with_statement" missing
+## FI13    __future__ import "print_function" missing
+## FI14    __future__ import "unicode_literals" missing
+## FI15    __future__ import "generator_stop" missing
+## FI16    __future__ import "nested_scopes" missing
+## FI17    __future__ import "generators" missing
+## FI18    __future__ import "annotations" missing
+
+## flake8-pytest-style
+## PT013  found incorrect import of pytest, use simple 'import pytest' instead
+## PT019  fixture ... without value is injected as parameter, use @pytest.mark.usefixtures instead
+
+## flake8-simplify
+## SIM106 Handle error-cases first
+
+## flake8-string-format
+## P101   format string does contain unindexed parameters
+
+## pep8-naming
+## N802   function name '...' should be lowercase
+## N803   argument name '...' should be lowercase
+## N806   variable '...' in function should be lowercase
+
+## pycodestyle
+## E203   whitespace before ':'             | black
+## W503   line break before binary operator | black
+
+# plugins
+## flake8-annotations
+suppress-dummy-args = True
+
+## flake8-unused-arguments
+unused-arguments-ignore-abstract-functions = True

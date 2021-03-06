@@ -1,2 +1,8 @@
+# editor
+.vim/
+
 # Python
 .cache/
+__pycache__/
+build/
+dist/
