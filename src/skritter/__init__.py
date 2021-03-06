@@ -49,16 +49,16 @@ class InitAction(Enum):
 @unique
 class TestAction(Enum):
     toggle_pause = Key.esc
-    fail_current = Key.ctrl
-    fail_previous = Key.shift
+    fail_current = "c"
+    fail_last = "l"
     shut_down = "q"
 
 
 @unique
 class ReviewAction(Enum):
     toggle_pause = Key.esc
-    fail_current = Key.ctrl
-    fail_previous = Key.shift
+    fail_current = "c"
+    fail_last = "l"
     shut_down = "q"
 
 
@@ -134,10 +134,10 @@ def advance(
         elif test_action is TestAction.fail_current:
             logger.info(FailMsg.current)
             _CONTROLLER.tap("1")
-            return fail_previous()
-        elif test_action is TestAction.fail_previous:
+            return fail_last()
+        elif test_action is TestAction.fail_last:
             logger.info(FailMsg.previous)
-            return fail_previous()
+            return fail_last()
         elif test_action is TestAction.shut_down:
             return State.shut_down
         else:
@@ -164,9 +164,9 @@ def advance(
         elif review_action is ReviewAction.fail_current:
             logger.info(FailMsg.current)
             return fail_current_review()
-        elif review_action is ReviewAction.fail_previous:
+        elif review_action is ReviewAction.fail_last:
             logger.info(FailMsg.previous)
-            return fail_previous()
+            return fail_last()
         elif review_action is ReviewAction.shut_down:
             return State.shut_down
         else:
@@ -219,7 +219,7 @@ def get_action(
     return None
 
 
-def fail_previous() -> "State":
+def fail_last() -> "State":
     _CONTROLLER.tap(Key.left)
     return fail_current_review()
 
